@@ -1,0 +1,46 @@
+project_name: docker-cleanup
+release:
+  github:
+    owner: foxdalas
+    name: docker-cleanup
+
+builds:
+  - id: docker-cleanup
+    binary: docker-cleanup
+    ldflags:
+      - "-X github.com/prometheus/common/version.Version={{ .Version }}"
+      - "-X github.com/prometheus/common/version.BuildDate={{.Date}}"
+      - "-X github.com/prometheus/common/version.BuildUser=goreleaser"
+      - "-X github.com/prometheus/common/version.Revision={{.Commit}}"
+      - "-X github.com/prometheus/common/version.Branch={{.Branch}}"
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+dockers:
+  - id: docker-cleanup-docker-amd64
+    goos: linux
+    goarch: amd64
+    ids:
+      - docker-cleanup
+    image_templates:
+      - "foxdalas/docker-cleanup:v{{ .Version }}-amd64"
+    build_flag_templates:
+      - "--platform=linux/amd64"
+    use: buildx
+  - id: docker-cleanup-docker-arm64
+    goos: linux
+    goarch: arm64
+    ids:
+      - docker-cleanup
+    image_templates:
+      - "foxdalas/docker-cleanup:v{{ .Version }}-arm64"
+    build_flag_templates:
+      - "--platform=linux/arm64"
+    use: buildx
+docker_manifests:
+  - name_template: foxdalas/docker-cleanup:v{{ .Version }}
+    image_templates:
+      - foxdalas/docker-cleanup:v{{ .Version }}-amd64
+      - foxdalas/docker-cleanup:v{{ .Version }}-arm64

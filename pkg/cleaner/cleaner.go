@@ -1,12 +1,13 @@
 package cleaner
 
-import "C"
 import (
 	"context"
+	"fmt"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/shirou/gopsutil/disk"
+	"github.com/sirupsen/logrus"
 )
 
 type DockerDiskUsage struct {
@@ -15,16 +16,49 @@ type DockerDiskUsage struct {
 	Volumes    float64
 }
 
+type Usage struct {
+	DiskUsageGb       float64
+	DiskUsagePercents float64
+	BuildCacheUsage   float64
+	ContainerUsage    float64
+	VolumesUsage      float64
+}
+
 type Cleaner struct {
 	Docker *client.Client
 	Ctx    context.Context
+	Log    *logrus.Entry
+	Device string
 }
 
-func New(client *client.Client, ctx context.Context) *Cleaner {
+func New(client *client.Client, ctx context.Context, log *logrus.Entry, device string) *Cleaner {
 	return &Cleaner{
 		Docker: client,
 		Ctx:    ctx,
+		Log:    log,
+		Device: device,
 	}
+}
+
+func (Cleaner *Cleaner) GetUsageInfo() (*Usage, error) {
+	diskSpaceUsageGB, diskSpaceUsagePercents, err := Cleaner.DeviceSpaceUsage(Cleaner.Device)
+	if err != nil {
+		return nil, fmt.Errorf("device %s: %s", Cleaner.Device, err)
+	}
+
+	dockerSpaceUsage, err := Cleaner.DockerDiskUsage()
+	if err != nil {
+		return nil, err
+	}
+
+	return &Usage{
+		DiskUsageGb:       diskSpaceUsageGB,
+		DiskUsagePercents: diskSpaceUsagePercents,
+		BuildCacheUsage:   dockerSpaceUsage.BuildCache,
+		ContainerUsage:    dockerSpaceUsage.Containers,
+		VolumesUsage:      dockerSpaceUsage.Volumes,
+	}, nil
+
 }
 
 // GB, Percent, Error

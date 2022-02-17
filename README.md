@@ -1,5 +1,9 @@
 docker-cleaner
 -------
+[![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/foxdalas/docker-cleaner/build-and-test/master?style=for-the-badge)](https://github.com/foxdalas/docker-cleaner/actions)
+[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/foxdalas/docker-cleaner?style=for-the-badge)](https://github.com/foxdalas/docker-cleaner/releases)
+[![Docker Pulls](https://img.shields.io/docker/pulls/foxdalas/docker-cleaner?style=for-the-badge)](https://hub.docker.com/repository/docker/foxdalas/docker-cleaner)
+
 One more docker cleaner for docker daemon. This tool working like ```docker system prune -a``` with prometheus metrics.
 
 Usage patterns

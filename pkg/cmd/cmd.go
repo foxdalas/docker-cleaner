@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/docker/docker/client"
+	units "github.com/docker/go-units"
 	"github.com/foxdalas/docker-cleaner/pkg/cleaner"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -36,14 +37,14 @@ type flags struct {
 func params() (*flags, error) {
 	flags := &flags{}
 
-	flag.StringVar(&flags.dockerDir, "docker.dir", "/var/lib/docker", "Docker block device.")
-	flag.Float64Var(&flags.dockerSpaceThreshold, "docker.threshold", 50.0, "Docker used space threshold in percents")
-	flag.DurationVar(&flags.dockerTTL, "docker.ttl", 48*time.Hour, "Docker TTL")
-	flag.DurationVar(&flags.interval, "cleaner.interval", 15*time.Second, "Cleaner interval")
-	flag.StringVar(&flags.exporterHost, "exporter.host", "0.0.0.0", "Exporter host")
-	flag.IntVar(&flags.exporterPort, "exporter.port", 9203, "Exporter port")
-	flag.DurationVar(&flags.exporterTimeout, "exporter.timeout", 15*time.Second, "Exporter timeout")
-	flag.StringVar(&flags.exporterMetricsPath, "exporter.telemetry-path", "/metrics", "Exporter path under which to expose metrics.")
+	flag.StringVar(&flags.dockerDir, "docker.dir", "/var/lib/docker", "Docker storage directory")
+	flag.Float64Var(&flags.dockerSpaceThreshold, "docker.threshold", 50.0, "Docker volume usage threshold")
+	flag.DurationVar(&flags.dockerTTL, "docker.ttl", 48*time.Hour, "Docker volumes TTL. Same until=48h")
+	flag.DurationVar(&flags.interval, "cleaner.interval", 15*time.Second, "Cleaner check interval")
+	flag.StringVar(&flags.exporterHost, "exporter.host", "0.0.0.0", "Docker cleaner exporter listen host")
+	flag.IntVar(&flags.exporterPort, "exporter.port", 9203, "Docker cleaner exporter listen port")
+	flag.DurationVar(&flags.exporterTimeout, "exporter.timeout", 15*time.Second, "Docker cleaner exporter timeout")
+	flag.StringVar(&flags.exporterMetricsPath, "exporter.telemetry-path", "/metrics", "Docker cleaner exporter path under which to expose metrics.")
 
 	flag.Parse()
 	return flags, nil
@@ -110,33 +111,37 @@ func cleanup(threshold float64, dir string, ttl time.Duration, interval time.Dur
 			timeStamp = time.Now().Unix()
 			mtx.Unlock()
 			log.Infof("Disk usage more then %.1f percents (%.1f usage), starting cleanup", threshold, usage.System.Percents)
-			if usage.Docker.BuildCache.Size > 0 {
-				reclamed, err := cleaner.BuildCachePrune()
+			if usage.Docker.BuildCache.Reclaimable > 0 {
+				log.Infof("BuildCache estimate reclaimable space: %s", units.HumanSize(float64(usage.Docker.BuildCache.Reclaimable)))
+				reclaimed, err := cleaner.BuildCachePrune()
 				if err != nil {
 					return err
 				}
-				log.Infof("Build cache prune reclamed Gb: %.1f", float64(reclamed)/(1<<30))
+				log.Infof("BuildCache prune reclaimed: %s", units.HumanSize(float64(reclaimed)))
 			}
 			if usage.Docker.Containers.Reclaimable > 0 {
-				reclamed, err := cleaner.ContainersPrune()
+				log.Infof("Containers estimate reclaimable space: %s", units.HumanSize(float64(usage.Docker.Containers.Reclaimable)))
+				reclaimed, err := cleaner.ContainersPrune()
 				if err != nil {
 					return err
 				}
-				log.Infof("Containers prune reclamed Gb: %.1f", float64(reclamed)/(1<<30))
+				log.Infof("Containers prune reclaimed: %s", units.HumanSize(float64(reclaimed)))
 			}
 			if usage.Docker.Volumes.Reclaimable > 0 {
+				log.Infof("Volumes estimate reclaimable space: %s", units.HumanSize(float64(usage.Docker.Volumes.Reclaimable)))
 				reclaimed, err := cleaner.VolumesPrune()
 				if err != nil {
 					return err
 				}
-				log.Infof("Volumes prune reclaimed Gb: %.1f", float64(reclaimed)/(1<<30))
+				log.Infof("Volumes prune reclaimed: %s", units.HumanSize(float64(reclaimed)))
 			}
 			if usage.Docker.Images.Reclaimable > 0 {
+				log.Infof("Images estimate reclaimable space: %s", units.HumanSize(float64(usage.Docker.Images.Reclaimable)))
 				reclaimed, err := cleaner.ImagesPrune()
 				if err != nil {
 					return err
 				}
-				log.Infof("Image prune reclaimed Gb: %.1f", float64(reclaimed)/(1<<30))
+				log.Infof("Images prune reclaimed: %s", units.HumanSize(float64(reclaimed)))
 			}
 		}
 		log.Infof("Waiting for interval: %s", interval)

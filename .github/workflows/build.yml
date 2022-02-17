@@ -29,10 +29,6 @@ jobs:
       - name: Test
         run: go test ./...
 
-      - name: Go build
-        run: go build .
-
-
       - uses: meeDamian/sync-readme@v1.0.6
         with:
           user: ${{ secrets.DOCKERHUB_USERNAME }}

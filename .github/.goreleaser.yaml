@@ -3,10 +3,14 @@ release:
   github:
     owner: foxdalas
     name: docker-cleaner
+  prerelease: auto
+
 
 builds:
   - id: docker-cleaner
     binary: docker-cleaner
+    env:
+      - CGO_ENABLED=0
     ldflags:
       - "-X github.com/prometheus/common/version.Version={{ .Version }}"
       - "-X github.com/prometheus/common/version.BuildDate={{.Date}}"
@@ -41,6 +45,10 @@ dockers:
     use: buildx
 docker_manifests:
   - name_template: foxdalas/docker-cleaner:v{{ .Version }}
+    image_templates:
+      - foxdalas/docker-cleaner:v{{ .Version }}-amd64
+      - foxdalas/docker-cleaner:v{{ .Version }}-arm64
+  - name_template: foxdalas/docker-cleaner:latest
     image_templates:
       - foxdalas/docker-cleaner:v{{ .Version }}-amd64
       - foxdalas/docker-cleaner:v{{ .Version }}-arm64

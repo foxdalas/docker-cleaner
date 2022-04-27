@@ -143,6 +143,10 @@ func cleanup(threshold float64, dir string, ttl time.Duration, interval time.Dur
 				log.Infoln("Prune dangling images")
 				dangling := filters.NewArgs(
 					filters.KeyValuePair{
+						Key:   "until",
+						Value: cleaner.TTL.String(),
+					},
+					filters.KeyValuePair{
 						Key:   "dangling",
 						Value: "true",
 					},
@@ -152,9 +156,13 @@ func cleanup(threshold float64, dir string, ttl time.Duration, interval time.Dur
 					return err
 				}
 
-				log.Infoln("Prune erected images")
+				log.Infof("Prune erected images older then %s", cleaner.TTL.String())
 
 				erected := filters.NewArgs(
+					filters.KeyValuePair{
+						Key:   "until",
+						Value: cleaner.TTL.String(),
+					},
 					filters.KeyValuePair{
 						Key:   "dangling",
 						Value: "false",

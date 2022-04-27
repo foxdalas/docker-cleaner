@@ -195,14 +195,8 @@ func (Cleaner *Cleaner) VolumesPrune() (uint64, error) {
 	return report.SpaceReclaimed, nil
 }
 
-func (Cleaner *Cleaner) ImagesPrune() (uint64, error) {
-	filter := filters.NewArgs(
-		filters.KeyValuePair{
-			Key:   "dangling",
-			Value: "false",
-		},
-	)
-	report, err := Cleaner.Docker.ImagesPrune(Cleaner.Ctx, filter)
+func (Cleaner *Cleaner) ImagesPrune(args filters.Args) (uint64, error) {
+	report, err := Cleaner.Docker.ImagesPrune(Cleaner.Ctx, args)
 	if err != nil {
 		return 0, err
 	}

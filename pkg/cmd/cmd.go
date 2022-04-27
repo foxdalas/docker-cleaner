@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	units "github.com/docker/go-units"
 	"github.com/foxdalas/docker-cleaner/pkg/cleaner"
@@ -136,11 +137,35 @@ func cleanup(threshold float64, dir string, ttl time.Duration, interval time.Dur
 				log.Infof("Volumes prune reclaimed: %s", units.HumanSize(float64(reclaimed)))
 			}
 			if usage.Docker.Images.Reclaimable > 0 {
+				var reclaimed uint64
+
 				log.Infof("Images estimate reclaimable space: %s", units.HumanSize(float64(usage.Docker.Images.Reclaimable)))
-				reclaimed, err := cleaner.ImagesPrune()
+				log.Infoln("Prune dangling images")
+				dangling := filters.NewArgs(
+					filters.KeyValuePair{
+						Key:   "dangling",
+						Value: "true",
+					},
+				)
+				dangling_reclaimed, err := cleaner.ImagesPrune(dangling)
 				if err != nil {
 					return err
 				}
+
+				log.Infoln("Prune erected images")
+
+				erected := filters.NewArgs(
+					filters.KeyValuePair{
+						Key:   "dangling",
+						Value: "false",
+					},
+				)
+				erected_reclaimed, err := cleaner.ImagesPrune(erected)
+				if err != nil {
+					return err
+				}
+				reclaimed = dangling_reclaimed + erected_reclaimed
+
 				log.Infof("Images prune reclaimed: %s", units.HumanSize(float64(reclaimed)))
 			}
 		}

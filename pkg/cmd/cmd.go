@@ -177,6 +177,14 @@ func cleanup(threshold float64, dir string, ttl time.Duration, interval time.Dur
 				log.Infof("Images prune reclaimed: %s", units.HumanSize(float64(reclaimed)))
 			}
 		}
+
+		log.Infoln("Prune unused networks")
+		cleanedNetworksCount, err := cleaner.NetworksPrune()
+		if err != nil {
+			return err
+		}
+		log.Infof("Removed %d unused networks", cleanedNetworksCount)
+
 		log.Infof("Waiting for interval: %s", interval)
 		time.Sleep(interval)
 	}

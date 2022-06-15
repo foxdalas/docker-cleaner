@@ -203,6 +203,12 @@ func (Cleaner *Cleaner) ImagesPrune(args filters.Args) (uint64, error) {
 	return report.SpaceReclaimed, nil
 }
 
+func (Cleaner *Cleaner) NetworksPrune() (int, error) {
+	filter := filters.NewArgs()
+	report, err := Cleaner.Docker.NetworksPrune(Cleaner.Ctx, filter)
+	return len(report.NetworksDeleted), err
+}
+
 func containerIsActive(container types.Container) bool {
 	return strings.Contains(container.State, "running") ||
 		strings.Contains(container.State, "paused") ||

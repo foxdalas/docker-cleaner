@@ -88,7 +88,7 @@ func cleanup(threshold float64, dir string, ttl time.Duration, interval time.Dur
 	ctx := context.Background()
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
-		return err
+		log.Error(err)
 	}
 	cleaner := cleaner.New(cli, ctx, log, dir, ttl)
 

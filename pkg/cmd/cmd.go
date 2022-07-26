@@ -19,7 +19,10 @@ import (
 	"time"
 )
 
-var usage = &cleaner.DiskUsage{}
+var usage = &cleaner.DiskUsage{
+	Docker: &cleaner.DockerDiskUsage{},
+	System: &cleaner.SystemDiskUsage{},
+}
 var timeStamp int64
 
 var mtx sync.Mutex
@@ -95,7 +98,7 @@ func cleanup(threshold float64, dir string, ttl time.Duration, interval time.Dur
 	for {
 		_, err = cli.Ping(ctx)
 		if err != nil {
-			log.Error(err)
+			log.Fatal(err)
 		}
 
 		usageData, err := cleaner.GetUsageInfo()

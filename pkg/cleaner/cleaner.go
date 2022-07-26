@@ -156,6 +156,9 @@ func (Cleaner *Cleaner) DockerDiskUsage() (*DockerDiskUsage, error) {
 }
 
 func (Cleaner *Cleaner) BuildCachePrune() (uint64, error) {
+	ctxTimeout, cancel := context.WithTimeout(context.Background(), time.Minute*3)
+	defer cancel()
+
 	filter := filters.NewArgs(filters.KeyValuePair{
 		Key:   "until",
 		Value: Cleaner.TTL.String(),
@@ -165,7 +168,7 @@ func (Cleaner *Cleaner) BuildCachePrune() (uint64, error) {
 		Filters: filter,
 	}
 
-	report, err := Cleaner.Docker.BuildCachePrune(Cleaner.Ctx, opts)
+	report, err := Cleaner.Docker.BuildCachePrune(ctxTimeout, opts)
 	if err != nil {
 		return 0, err
 	}
@@ -173,12 +176,15 @@ func (Cleaner *Cleaner) BuildCachePrune() (uint64, error) {
 }
 
 func (Cleaner *Cleaner) ContainersPrune() (uint64, error) {
+	ctxTimeout, cancel := context.WithTimeout(context.Background(), time.Minute*3)
+	defer cancel()
+
 	filter := filters.NewArgs(filters.KeyValuePair{
 		Key:   "until",
 		Value: Cleaner.TTL.String(),
 	})
 
-	report, err := Cleaner.Docker.ContainersPrune(Cleaner.Ctx, filter)
+	report, err := Cleaner.Docker.ContainersPrune(ctxTimeout, filter)
 	if err != nil {
 		return 0, err
 	}
@@ -186,9 +192,12 @@ func (Cleaner *Cleaner) ContainersPrune() (uint64, error) {
 }
 
 func (Cleaner *Cleaner) VolumesPrune() (uint64, error) {
+	ctxTimeout, cancel := context.WithTimeout(context.Background(), time.Minute*3)
+	defer cancel()
+
 	filter := filters.NewArgs()
 
-	report, err := Cleaner.Docker.VolumesPrune(Cleaner.Ctx, filter)
+	report, err := Cleaner.Docker.VolumesPrune(ctxTimeout, filter)
 	if err != nil {
 		return 0, err
 	}
@@ -196,7 +205,10 @@ func (Cleaner *Cleaner) VolumesPrune() (uint64, error) {
 }
 
 func (Cleaner *Cleaner) ImagesPrune(args filters.Args) (uint64, error) {
-	report, err := Cleaner.Docker.ImagesPrune(Cleaner.Ctx, args)
+	ctxTimeout, cancel := context.WithTimeout(context.Background(), time.Minute*3)
+	defer cancel()
+
+	report, err := Cleaner.Docker.ImagesPrune(ctxTimeout, args)
 	if err != nil {
 		return 0, err
 	}
@@ -204,8 +216,11 @@ func (Cleaner *Cleaner) ImagesPrune(args filters.Args) (uint64, error) {
 }
 
 func (Cleaner *Cleaner) NetworksPrune() (int, error) {
+	ctxTimeout, cancel := context.WithTimeout(context.Background(), time.Minute*3)
+	defer cancel()
+
 	filter := filters.NewArgs()
-	report, err := Cleaner.Docker.NetworksPrune(Cleaner.Ctx, filter)
+	report, err := Cleaner.Docker.NetworksPrune(ctxTimeout, filter)
 	return len(report.NetworksDeleted), err
 }
 

@@ -84,7 +84,7 @@ func makeLog() *log.Entry {
 	return log.WithField("context", "docker-cleaner")
 }
 
-func cleanup(threshold float64, dir string, ttl time.Duration, interval time.Duration, log *log.Entry) error {
+func cleanup(threshold float64, dir string, ttl time.Duration, interval time.Duration, log *log.Entry) {
 	ctx := context.Background()
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
@@ -95,12 +95,12 @@ func cleanup(threshold float64, dir string, ttl time.Duration, interval time.Dur
 	for {
 		_, err = cli.Ping(ctx)
 		if err != nil {
-			return err
+			log.Error(err)
 		}
 
 		usageData, err := cleaner.GetUsageInfo()
 		if err != nil {
-			return err
+			log.Error(err)
 		}
 
 		mtx.Lock()
@@ -116,7 +116,7 @@ func cleanup(threshold float64, dir string, ttl time.Duration, interval time.Dur
 				log.Infof("BuildCache estimate reclaimable space: %s", units.HumanSize(float64(usage.Docker.BuildCache.Reclaimable)))
 				reclaimed, err := cleaner.BuildCachePrune()
 				if err != nil {
-					return err
+					log.Error(err)
 				}
 				log.Infof("BuildCache prune reclaimed: %s", units.HumanSize(float64(reclaimed)))
 			}
@@ -124,7 +124,7 @@ func cleanup(threshold float64, dir string, ttl time.Duration, interval time.Dur
 				log.Infof("Containers estimate reclaimable space: %s", units.HumanSize(float64(usage.Docker.Containers.Reclaimable)))
 				reclaimed, err := cleaner.ContainersPrune()
 				if err != nil {
-					return err
+					log.Error(err)
 				}
 				log.Infof("Containers prune reclaimed: %s", units.HumanSize(float64(reclaimed)))
 			}
@@ -132,7 +132,7 @@ func cleanup(threshold float64, dir string, ttl time.Duration, interval time.Dur
 				log.Infof("Volumes estimate reclaimable space: %s", units.HumanSize(float64(usage.Docker.Volumes.Reclaimable)))
 				reclaimed, err := cleaner.VolumesPrune()
 				if err != nil {
-					return err
+					log.Error(err)
 				}
 				log.Infof("Volumes prune reclaimed: %s", units.HumanSize(float64(reclaimed)))
 			}
@@ -153,7 +153,7 @@ func cleanup(threshold float64, dir string, ttl time.Duration, interval time.Dur
 				)
 				dangling_reclaimed, err := cleaner.ImagesPrune(dangling)
 				if err != nil {
-					return err
+					log.Error(err)
 				}
 
 				log.Infof("Prune erected images older then %s", cleaner.TTL.String())
@@ -170,7 +170,7 @@ func cleanup(threshold float64, dir string, ttl time.Duration, interval time.Dur
 				)
 				erected_reclaimed, err := cleaner.ImagesPrune(erected)
 				if err != nil {
-					return err
+					log.Error(err)
 				}
 				reclaimed = dangling_reclaimed + erected_reclaimed
 
@@ -181,7 +181,7 @@ func cleanup(threshold float64, dir string, ttl time.Duration, interval time.Dur
 		log.Infoln("Prune unused networks")
 		cleanedNetworksCount, err := cleaner.NetworksPrune()
 		if err != nil {
-			return err
+			log.Error(err)
 		}
 		log.Infof("Removed %d unused networks", cleanedNetworksCount)
 
@@ -202,10 +202,7 @@ func Run() {
 
 	// Cleanup
 	go func(threshold float64, dir string, ttl time.Duration, interval time.Duration) {
-		err = cleanup(threshold, dir, ttl, interval, log)
-		if err != nil {
-			log.Error(err)
-		}
+		cleanup(threshold, dir, ttl, interval, log)
 	}(flags.dockerSpaceThreshold, flags.dockerDir, flags.dockerTTL, flags.interval)
 
 	prometheus.MustRegister(NewExporter())

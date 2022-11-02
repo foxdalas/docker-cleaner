@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/docker/docker v20.10.21+incompatible
 	github.com/docker/go-units v0.5.0
-	github.com/prometheus/client_golang v1.13.0
+	github.com/prometheus/client_golang v1.13.1
 	github.com/prometheus/common v0.37.0
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/sirupsen/logrus v1.9.0

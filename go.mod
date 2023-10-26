@@ -3,7 +3,7 @@ module github.com/foxdalas/docker-cleaner
 go 1.17
 
 require (
-	github.com/docker/docker v24.0.0+incompatible
+	github.com/docker/docker v24.0.7+incompatible
 	github.com/docker/go-units v0.5.0
 	github.com/prometheus/client_golang v1.16.0
 	github.com/prometheus/common v0.44.0
